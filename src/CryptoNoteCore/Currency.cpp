@@ -421,19 +421,19 @@ namespace CryptoNote {
 
 		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_3) {
 			
-			printf(" diff: %d \n", blockMajorVersion);
+			logger(INFO, BRIGHT_CYAN) << "BLOCK MAJOR VERSION:   " << blockMajorVersion;
 			
 			return nextDifficultyV3(timestamps, cumulativeDifficulties);
 		}
 		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_2) {
 			
-			printf(" diff: %d \n", blockMajorVersion);
+			logger(INFO, BRIGHT_CYAN) << "BLOCK MAJOR VERSION:   " << blockMajorVersion;
 
 			return nextDifficultyV2(timestamps, cumulativeDifficulties);
 		}
 		else {
 
-			printf(" diff: %d \n", blockMajorVersion);
+			logger(INFO, BRIGHT_CYAN) << "BLOCK MAJOR VERSION:   " << blockMajorVersion;
 			
 			return nextDifficultyV1(timestamps, cumulativeDifficulties);
 		}
