@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2016, The Karbowanec developers
+// Copyright (c) 2016, The Karbowanec developers, The Brazukcoin developers
 // Copyright (c) 2018, The Brazukcoin developers
 //
 // This file is part of Bytecoin.
@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+
 #include <boost/utility.hpp>
 #include "../CryptoNoteConfig.h"
 #include "../crypto/hash.h"
@@ -34,65 +35,61 @@ namespace CryptoNote {
 class AccountBase;
 
 class Currency {
-public:
+ public:
   uint64_t maxBlockHeight() const { return m_maxBlockHeight; }
   size_t maxBlockBlobSize() const { return m_maxBlockBlobSize; }
   size_t maxTxSize() const { return m_maxTxSize; }
   uint64_t publicAddressBase58Prefix() const { return m_publicAddressBase58Prefix; }
   size_t minedMoneyUnlockWindow() const { return m_minedMoneyUnlockWindow; }
-
   size_t timestampCheckWindow() const { return m_timestampCheckWindow; }
   uint64_t blockFutureTimeLimit() const { return m_blockFutureTimeLimit; }
-
   uint64_t moneySupply() const { return m_moneySupply; }
   unsigned int emissionSpeedFactor() const { return m_emissionSpeedFactor; }
   size_t cryptonoteCoinVersion() const { return m_cryptonoteCoinVersion; }
-
   size_t rewardBlocksWindow() const { return m_rewardBlocksWindow; }
   size_t blockGrantedFullRewardZone() const { return m_blockGrantedFullRewardZone; }
   size_t blockGrantedFullRewardZoneByBlockVersion(uint8_t blockMajorVersion) const;
   size_t minerTxBlobReservedSize() const { return m_minerTxBlobReservedSize; }
-
   size_t numberOfDecimalPlaces() const { return m_numberOfDecimalPlaces; }
   uint64_t coin() const { return m_coin; }
-
   uint64_t minimumFee() const { return m_mininumFee; }
   uint64_t defaultDustThreshold() const { return m_defaultDustThreshold; }
-
   uint64_t difficultyTarget() const { return m_difficultyTarget; }
   size_t difficultyWindow() const { return m_difficultyWindow; }
   size_t difficultyLag() const { return m_difficultyLag; }
   size_t difficultyCut() const { return m_difficultyCut; }
   size_t difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion) const {
-    if (blockMajorVersion >= BLOCK_MAJOR_VERSION_3) {
-      return difficultyBlocksCount3() + 1;
-    }
-    else if (blockMajorVersion == BLOCK_MAJOR_VERSION_2) {
-      return difficultyBlocksCount2();
-    }
-    else {
-      return difficultyBlocksCount();
+    switch (blockMajorVersion) {
+      case BLOCK_MAJOR_VERSION_4:
+        return difficultyBlocksCount4();
+        break;
+      case BLOCK_MAJOR_VERSION_3:
+        return difficultyBlocksCount3();
+        break;
+      case BLOCK_MAJOR_VERSION_2:
+        return difficultyBlocksCount2();
+        break;
+      default:  // blockMajorVersion == 1
+        return difficultyBlocksCount();
     }
   };
+  
   size_t difficultyBlocksCount() const { return m_difficultyWindow + m_difficultyLag; }
   size_t difficultyBlocksCount2() const { return CryptoNote::parameters::DIFFICULTY_WINDOW_V2; }
   size_t difficultyBlocksCount3() const { return CryptoNote::parameters::DIFFICULTY_WINDOW_V3; }
-
+  size_t difficultyBlocksCount4() const { return CryptoNote::parameters::DIFFICULTY_WINDOW_V4; }
+  
   size_t maxBlockSizeInitial() const { return m_maxBlockSizeInitial; }
   uint64_t maxBlockSizeGrowthSpeedNumerator() const { return m_maxBlockSizeGrowthSpeedNumerator; }
   uint64_t maxBlockSizeGrowthSpeedDenominator() const { return m_maxBlockSizeGrowthSpeedDenominator; }
-
   uint64_t lockedTxAllowedDeltaSeconds() const { return m_lockedTxAllowedDeltaSeconds; }
   size_t lockedTxAllowedDeltaBlocks() const { return m_lockedTxAllowedDeltaBlocks; }
-
   uint64_t mempoolTxLiveTime() const { return m_mempoolTxLiveTime; }
   uint64_t mempoolTxFromAltBlockLiveTime() const { return m_mempoolTxFromAltBlockLiveTime; }
   uint64_t numberOfPeriodsToForgetTxDeletedFromPool() const { return m_numberOfPeriodsToForgetTxDeletedFromPool; }
-
   size_t fusionTxMaxSize() const { return m_fusionTxMaxSize; }
   size_t fusionTxMinInputCount() const { return m_fusionTxMinInputCount; }
   size_t fusionTxMinInOutCountRatio() const { return m_fusionTxMinInOutCountRatio; }
-
   uint32_t upgradeHeight(uint8_t majorVersion) const;
   unsigned int upgradeVotingThreshold() const { return m_upgradeVotingThreshold; }
   uint32_t upgradeVotingWindow() const { return m_upgradeVotingWindow; }
@@ -137,22 +134,20 @@ public:
   difficulty_type nextDifficultyV1(std::vector<uint64_t> timestamps, std::vector<difficulty_type> Difficulties) const;
   difficulty_type nextDifficultyV2(std::vector<uint64_t> timestamps, std::vector<difficulty_type> Difficulties) const;
   difficulty_type nextDifficultyV3(std::vector<uint64_t> timestamps, std::vector<difficulty_type> Difficulties) const;
+  difficulty_type nextDifficultyV4(std::vector<uint64_t> timestamps, std::vector<difficulty_type> Difficulties) const;  
 
+  bool checkProofOfWork(Crypto::cn_context& context, const Block& block, difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const;
   bool checkProofOfWorkV1(Crypto::cn_context& context, const Block& block, difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const;
   bool checkProofOfWorkV2(Crypto::cn_context& context, const Block& block, difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const;
-  bool checkProofOfWork(Crypto::cn_context& context, const Block& block, difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const;
 
   size_t getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount) const;
 
-private:
-  Currency(Logging::ILogger& log) : logger(log, "currency") {
-  }
-
+ private:
+  Currency(Logging::ILogger& log) : logger(log, "currency") {}
   bool init();
-
   bool generateGenesisBlock();
 
-private:
+ private:
   uint64_t m_maxBlockHeight;
   size_t m_maxBlockBlobSize;
   size_t m_maxTxSize;
@@ -199,8 +194,6 @@ private:
   uint32_t m_upgradeHeightV2;
   uint32_t m_upgradeHeightV3;
   uint32_t m_upgradeHeightV4;
-  uint32_t m_upgradeHeightV5;
-
   unsigned int m_upgradeVotingThreshold;
   uint32_t m_upgradeVotingWindow;
   uint32_t m_upgradeWindow;
@@ -224,9 +217,9 @@ private:
 };
 
 class CurrencyBuilder : boost::noncopyable {
-public:
+ public:
   CurrencyBuilder(Logging::ILogger& log);
-
+  
   Currency currency() {
     if (!m_currency.init()) {
       throw std::runtime_error("Failed to initialize currency object");
@@ -280,7 +273,6 @@ public:
   CurrencyBuilder& upgradeHeightV2(uint64_t val) { m_currency.m_upgradeHeightV2 = static_cast<uint32_t>(val); return *this; }
   CurrencyBuilder& upgradeHeightV3(uint64_t val) { m_currency.m_upgradeHeightV3 = static_cast<uint32_t>(val); return *this; }
   CurrencyBuilder& upgradeHeightV4(uint64_t val) { m_currency.m_upgradeHeightV4 = static_cast<uint32_t>(val); return *this; }
-  CurrencyBuilder& upgradeHeightV5(uint64_t val) { m_currency.m_upgradeHeightV5 = static_cast<uint32_t>(val); return *this; }
 
   CurrencyBuilder& upgradeVotingThreshold(unsigned int val);
   CurrencyBuilder& upgradeVotingWindow(size_t val) { m_currency.m_upgradeVotingWindow = static_cast<uint32_t>(val); return *this; }
@@ -294,7 +286,7 @@ public:
   
   CurrencyBuilder& testnet(bool val) { m_currency.m_testnet = val; return *this; }
 
-private:
+ private:
   Currency m_currency;
 };
 

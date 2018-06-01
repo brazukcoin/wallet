@@ -249,14 +249,14 @@ bool gen_block_invalid_nonce::generate(std::vector<test_event_entry>& events) co
   BLOCK_VALIDATION_INIT_GENERATE();
 
   std::vector<uint64_t> timestamps;
-  std::vector<difficulty_type> commulative_difficulties;
-  if (!lift_up_difficulty(m_currency, events, timestamps, commulative_difficulties, generator, 2, blk_0, miner_account,
+  std::vector<difficulty_type> cummulative_difficulties;
+  if (!lift_up_difficulty(m_currency, events, timestamps, cummulative_difficulties, generator, 2, blk_0, miner_account,
     m_blockMajorVersion)) {
     return false;
   }
 
   // Create invalid nonce
-  difficulty_type diffic = m_currency.nextDifficulty(m_blockMajorVersion, timestamps, commulative_difficulties);
+  difficulty_type diffic = m_currency.nextDifficulty(m_blockMajorVersion, timestamps, cummulative_difficulties);
   assert(1 < diffic);
   const Block& blk_last = boost::get<Block>(events.back());
   uint64_t timestamp = blk_last.timestamp;

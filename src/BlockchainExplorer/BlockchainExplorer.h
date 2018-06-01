@@ -17,19 +17,16 @@
 
 #pragma once
 
-#include <mutex>
 #include <atomic>
+#include <mutex>
 #include <unordered_set>
 
+#include "Common/ObserverManager.h"
+#include "Logging/LoggerRef.h"
+#include "Wallet/WalletAsyncContextCounter.h"
+#include "BlockchainExplorerErrors.h"
 #include "IBlockchainExplorer.h"
 #include "INode.h"
-
-#include "Common/ObserverManager.h"
-#include "BlockchainExplorerErrors.h"
-
-#include "Wallet/WalletAsyncContextCounter.h"
-
-#include "Logging/LoggerRef.h"
 
 namespace CryptoNote {
 

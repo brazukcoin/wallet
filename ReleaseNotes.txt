@@ -1,5 +1,15 @@
-Release notes Brazukcoin 1.5.2
+Release Notes:
 
-- v5 fork to fix chain
-- Zawy LWMA Difficulty algorithm
-- rebase from Karbowanec 1.4.6
+v.1.5.1
+
+- Fork to V4 block height.
+- Fix failed difficulty algorithm
+- Fix IGD Port Mapping
+
+v.1.5.0
+
+- new Zawy's LWMA algorithm
+
+v.1.4.5
+
+- First release after forking Karbowanec 1.3.0
