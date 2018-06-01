@@ -1821,7 +1821,7 @@ bool Blockchain::addNewBlock(const Block& bl_, block_verification_context& bvc) 
 
   bool add_result;
 
-  logger(INFO,BRIGHT_BLUE)
+  logger(INFO,BRIGHT_BLUE);
 
   { //to avoid deadlock lets lock tx_pool for whole add/reorganize process
     std::lock_guard<decltype(m_tx_pool)> poolLock(m_tx_pool);
