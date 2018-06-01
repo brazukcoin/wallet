@@ -305,8 +305,8 @@ void serialize(MultisignatureOutput& multisignature, ISerializer& serializer) {
 }
 
 void serialize(ParentBlockSerializer& pbs, ISerializer& serializer) {
+  
   serializer(pbs.m_parentBlock.majorVersion, "majorVersion");
-
   serializer(pbs.m_parentBlock.minorVersion, "minorVersion");
   serializer(pbs.m_timestamp, "timestamp");
   serializer(pbs.m_parentBlock.previousBlockHash, "prevId");
@@ -380,7 +380,7 @@ void serializeBlockHeader(BlockHeader& header, ISerializer& serializer) {
   
   serializer(header.majorVersion, "major_version");
   
-  if (header.majorVersion > BLOCK_MAJOR_VERSION_4) {
+  if (header.majorVersion > BLOCK_MAJOR_VERSION_5) {
     throw std::runtime_error("Wrong major version");
   }
 
