@@ -485,58 +485,70 @@ namespace CryptoNote {
 		return (low + timeSpan - 1) / timeSpan;
 	}
 
-	difficulty_type Currency::nextDifficultyV2(std::vector<uint64_t> timestamps,
-		std::vector<difficulty_type> cumulativeDifficulties) const {
+	
+	difficulty_type Currency::nextDifficultyV2(
+			std::vector<uint64_t> timestamps,
+      std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		// Difficulty calculation v. 2
-		// based on Zawy difficulty algorithm v1.0
-		// next Diff = Avg past N Diff * TargetInterval / Avg past N solve times
-		// as described at https://github.com/monero-project/research-lab/issues/3
-		// Window time span and total difficulty is taken instead of average as suggested by Nuclear_chaos
+    difficulty_type nextDiff(0);
 
-		size_t m_difficultyWindow_2 = CryptoNote::parameters::DIFFICULTY_WINDOW_V2;
-		assert(m_difficultyWindow_2 >= 2);
+    size_t m_difficultyWindow_2 = CryptoNote::parameters::DIFFICULTY_WINDOW_V2;
 
-		if (timestamps.size() > m_difficultyWindow_2) {
-			timestamps.resize(m_difficultyWindow_2);
-			cumulativeDifficulties.resize(m_difficultyWindow_2);
-		}
+    if (timestamps.size() > m_difficultyWindow_2) {
+      timestamps.resize(m_difficultyWindow_2);
+      cumulativeDifficulties.resize(m_difficultyWindow_2);
+    }
 
-		size_t length = timestamps.size();
-		assert(length == cumulativeDifficulties.size());
-		assert(length <= m_difficultyWindow_2);
-		if (length <= 1) {
-			return 1;
-		}
+    size_t length = timestamps.size();
+    assert(length == cumulativeDifficulties.size());
+    assert(length <= m_difficultyWindow_2);
 
-		sort(timestamps.begin(), timestamps.end());
+    if (length <= 1) {
+      return 1;
+    }
 
-		uint64_t timeSpan = timestamps.back() - timestamps.front();
-		if (timeSpan == 0) {
-			timeSpan = 1;
-		}
+    const double_t adjust = 0.9912338056;
+    const uint64_t c_difficultyTarget = m_difficultyTarget;
 
-		difficulty_type totalWork = cumulativeDifficulties.back() - cumulativeDifficulties.front();
-		assert(totalWork > 0);
+    uint64_t weightedSolveTimes = 0;
+    uint64_t aimedTarget = 0;
+    int64_t totalSolvedTime = 0;
 
-		// uint64_t nextDiffZ = totalWork * m_difficultyTarget / timeSpan; 
+    for (size_t i = 1; i < length; i++) {
+      uint64_t solveTime;
+      solveTime = timestamps[i] - timestamps[i-1];
 
-		uint64_t low, high;
-		low = mul128(totalWork, m_difficultyTarget, &high);
-		// blockchain error "Difficulty overhead" if this function returns zero
-		if (high != 0) {
-			return 0;
-		}
+      if (solveTime >  8 * c_difficultyTarget) {
+        solveTime =  8 * c_difficultyTarget;
+      }
 
-		uint64_t nextDiffZ = low / timeSpan;
+    	weightedSolveTimes +=  solveTime * i;
+   		totalSolvedTime += solveTime;
+    }
 
-		// minimum limit
-		if (nextDiffZ < 100000) {
-			nextDiffZ = 100000;
-		}
+    aimedTarget = adjust * ((length + 1) / 2.0) * c_difficultyTarget ;
 
-		return nextDiffZ;
-	}
+    if (weightedSolveTimes < c_difficultyTarget * length / 2) {
+      weightedSolveTimes = c_difficultyTarget * length / 2;
+    }
+
+    difficulty_type totalWork = cumulativeDifficulties.back() - cumulativeDifficulties.front();
+    assert(totalWork > 0);
+    uint64_t low, high;
+    low = mul128(totalWork, aimedTarget, &high);
+
+    if (high != 0) {
+      return 0;
+    }
+
+    nextDiff = low / weightedSolveTimes;
+
+    if (nextDiff <= 0) {
+      nextDiff = 1;
+    }
+
+    return nextDiff;
+  }
 
 	difficulty_type Currency::nextDifficultyV3(std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
