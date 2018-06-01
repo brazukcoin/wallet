@@ -532,7 +532,7 @@ namespace CryptoNote {
 
 		// minimum limit
 		if (nextDiffZ < 100000) {
-		//	nextDiffZ = 100000;
+			nextDiffZ = 100000;
 		}
 
 		return nextDiffZ;
@@ -595,7 +595,7 @@ namespace CryptoNote {
 		
 		// minimum limit
 		if (next_difficulty < 100000) {
-		//	next_difficulty = 100000;
+			next_difficulty = 100000;
 		}
 
 		return next_difficulty;

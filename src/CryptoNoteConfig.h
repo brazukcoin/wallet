@@ -79,7 +79,7 @@ const size_t   FUSION_TX_MIN_IN_OUT_COUNT_RATIO              = 4;
 const uint32_t UPGRADE_HEIGHT_V2                             = 18500;
 const uint32_t UPGRADE_HEIGHT_V3                             = 40000;
 const uint32_t UPGRADE_HEIGHT_V4                             = 100000;
-const uint32_t UPGRADE_HEIGHT_V5                             = 150000;
+const uint32_t UPGRADE_HEIGHT_V5                             = 200000;
 
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90; // percent
 const uint32_t UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -138,8 +138,8 @@ const uint32_t P2P_IDLE_CONNECTION_KILL_INTERVAL             = (5 * 60);      //
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "8f80f9a5a434a9f1510d13336228debfee9c918ce505efe225d8c94d045fa115";
 
 const char* const SEED_NODES[] = { 
-  "1.1.1.1:44044",
-  "1.1.1.2:44044"
+  "195.181.219.81:44044",
+  "212.237.21.235:44044"
 };
 
 struct CheckpointData {
