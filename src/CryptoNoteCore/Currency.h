@@ -66,7 +66,7 @@ public:
   
   size_t difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion) const {
     if (blockMajorVersion >= BLOCK_MAJOR_VERSION_3) {
-      return difficultyBlocksCount3() + 1;
+      return difficultyBlocksCount3();
     }
     else if (blockMajorVersion == BLOCK_MAJOR_VERSION_2) {
       return difficultyBlocksCount2();

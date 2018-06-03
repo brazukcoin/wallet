@@ -562,7 +562,7 @@ namespace CryptoNote {
     return nextDiff;
   }
 
-		difficulty_type Currency::nextDifficultyV3(
+	difficulty_type Currency::nextDifficultyV3(
 			std::vector<uint64_t> timestamps,
       std::vector<difficulty_type> cumulativeDifficulties) const {
 
@@ -602,8 +602,9 @@ namespace CryptoNote {
     assert(totalWork > 0);
     low = mul128(totalWork, aimedTarget, &high);
     if (high != 0) {
-        return 0;
+      return 0;
     }
+
     return low/weightedSolveTimes;
 	}
 
@@ -709,7 +710,7 @@ namespace CryptoNote {
 			return false;
 		}
 
-		if (!check_hash(proofOfWork, currentDiffic)) {
+		if (!check_hash(proofOfWork, currentDiffic && !BLOCK_MAJOR_VERSION_3)) {
 			return false;
 		}
 
@@ -736,7 +737,6 @@ namespace CryptoNote {
 			logger(ERROR, BRIGHT_YELLOW) << "Aux block hash wasn't found in merkle tree";
 			return false;
 		}
-
 		return true;
 	}
 
