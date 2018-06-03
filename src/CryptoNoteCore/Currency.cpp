@@ -710,7 +710,7 @@ namespace CryptoNote {
 			return false;
 		}
 
-		if (!check_hash(proofOfWork, currentDiffic && !BLOCK_MAJOR_VERSION_3)) {
+		if (!check_hash(proofOfWork, currentDiffic)) {
 			return false;
 		}
 
