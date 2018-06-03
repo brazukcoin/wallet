@@ -562,56 +562,50 @@ namespace CryptoNote {
     return nextDiff;
   }
 
-difficulty_type Currency::nextDifficultyV3(
+		difficulty_type Currency::nextDifficultyV3(
 			std::vector<uint64_t> timestamps,
-			std::vector<difficulty_type> cumulativeDifficulties) const {
+      std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		const size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3 - 1;
-		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
-		
-		if (timestamps.size() > N + 1) {
-			timestamps.resize(N + 1);
-			cumulativeDifficulties.resize(N + 1);
-		}
-		
-		size_t n = timestamps.size();
-		
-		if (n <= 1) {
-			return 1;
-		}
-		
-		const double_t adjust = 0.998;
-		const double_t k = N * (N + 1) / 2;
-
-		double_t LWMA(0), sum_inverse_D(0), harmonic_mean_D(0), nextDifficulty(0);
-		int64_t solveTime(0);
-		uint64_t difficulty(0), next_difficulty(0);
-
-		// Loop through N most recent blocks. N is most recently solved block.
-		for (int64_t i = 1; i <= N; i++) {
-			solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]);
-			solveTime = std::min<int64_t>((T * 7), std::max<int64_t>(solveTime, (-7 * T)));
-			difficulty = cumulativeDifficulties[i] - cumulativeDifficulties[i - 1];
-			LWMA += solveTime * i / k;
-			sum_inverse_D += 1 / static_cast<double_t>(difficulty);
-		}
-
-		// Keep LWMA sane in case something unforeseen occurs.
-    	if (static_cast<int64_t>(boost::math::round(LWMA)) < T / 20) {
-		    LWMA = static_cast<double_t>(T / 20);
-		}
-		
-		harmonic_mean_D = N / sum_inverse_D * adjust;
-	    nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
-	    next_difficulty = static_cast<uint64_t>(nextDifficulty);
-		
-		// minimum limit
-		if (next_difficulty < 100000) {
-			next_difficulty = 100000;
-		}
-
-		return next_difficulty;
-  }
+    size_t c_difficultyWindow = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
+    int64_t c_difficultyTarget = static_cast<int64_t>(m_difficultyTarget);
+    if (timestamps.size() > c_difficultyWindow) {
+        timestamps.resize(c_difficultyWindow);
+        cumulativeDifficulties.resize(c_difficultyWindow);
+    }
+    size_t length = timestamps.size();
+    assert(length == cumulativeDifficulties.size());
+    assert(length <= c_difficultyWindow);
+    if (length <= 1) {
+        return 1;
+    }
+    int64_t weightedSolveTimes(0),minWST(0);
+    uint64_t aimedTarget(0),low,high;
+    difficulty_type totalWork(0);
+    double_t adjust = 0.9909;
+    for (int64_t i = 1; i < length; i++) {
+        int64_t solveTime(0);
+        solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i-1]);
+        if (solveTime >  6 * c_difficultyTarget){ //  high limit
+            solveTime =  6 * c_difficultyTarget;
+        }
+        if (solveTime <  (-5 * c_difficultyTarget)){ // low limit
+            solveTime =  (-5 * c_difficultyTarget);
+        }
+        weightedSolveTimes +=  solveTime * i;
+    }
+    minWST = c_difficultyTarget * length*(length+1)/8;
+    if(weightedSolveTimes < minWST){
+        weightedSolveTimes = minWST;
+    }
+    totalWork = cumulativeDifficulties.back() - cumulativeDifficulties.front();
+    aimedTarget = adjust * ((length + 1) / 2.0) * c_difficultyTarget ;
+    assert(totalWork > 0);
+    low = mul128(totalWork, aimedTarget, &high);
+    if (high != 0) {
+        return 0;
+    }
+    return low/weightedSolveTimes;
+	}
 
 	difficulty_type Currency::nextDifficultyV5(std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
