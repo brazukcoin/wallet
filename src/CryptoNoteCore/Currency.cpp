@@ -419,34 +419,19 @@ namespace CryptoNote {
 	difficulty_type Currency::nextDifficulty(uint8_t blockMajorVersion, std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_5) {
-			
-			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
-			
+		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_5) {			
 			return nextDifficultyV5(timestamps, cumulativeDifficulties);
 		}
 		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_4) {
-			
-			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
-			
 			return nextDifficultyV4(timestamps, cumulativeDifficulties);
 		}
-		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_3) {
-			
-			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
-			
+		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_3) {			
 			return nextDifficultyV3(timestamps, cumulativeDifficulties);
 		}
 		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_2) {
-			
-			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
-
 			return nextDifficultyV2(timestamps, cumulativeDifficulties);
 		}
 		else {
-
-			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
-			
 			return nextDifficultyV1(timestamps, cumulativeDifficulties);
 		}
 	}
