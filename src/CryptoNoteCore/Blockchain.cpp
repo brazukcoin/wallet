@@ -478,8 +478,10 @@ bool Blockchain::init(const std::string& config_folder, bool load_existing) {
     rollbackBlockchainTo(lastValidCheckpointHeight);
   }
 
-  if (!m_upgradeDetectorV2.init() || !m_upgradeDetectorV3.init() || 
-      !m_upgradeDetectorV4.init() || !m_upgradeDetectorV5.init()) {
+  if (!m_upgradeDetectorV2.init() ||
+      !m_upgradeDetectorV3.init() || 
+      !m_upgradeDetectorV4.init() ||
+      !m_upgradeDetectorV5.init()) {
     logger(ERROR, BRIGHT_RED) << "Failed to initialize upgrade detector";
     return false;
   }
@@ -527,8 +529,10 @@ bool Blockchain::init(const std::string& config_folder, bool load_existing) {
     reinitUpgradeDetectors = true;
   }
 
-  if (reinitUpgradeDetectors && (!m_upgradeDetectorV2.init() || !m_upgradeDetectorV3.init() ||
-                                 !m_upgradeDetectorV4.init() || !m_upgradeDetectorV5.init())) {
+  if (reinitUpgradeDetectors && (!m_upgradeDetectorV2.init() ||
+                                 !m_upgradeDetectorV3.init() ||
+                                 !m_upgradeDetectorV4.init() ||
+                                 !m_upgradeDetectorV5.init())) {
     logger(ERROR, BRIGHT_RED) << "Failed to initialize upgrade detector";
     return false;
   }

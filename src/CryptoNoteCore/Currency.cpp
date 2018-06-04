@@ -419,22 +419,19 @@ namespace CryptoNote {
 	difficulty_type Currency::nextDifficulty(uint8_t blockMajorVersion, std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_3) {
-			
-			printf(" diff: %d \n", blockMajorVersion);
-			
+		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_5) {			
+			return nextDifficultyV5(timestamps, cumulativeDifficulties);
+		}
+		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_4) {
+			return nextDifficultyV4(timestamps, cumulativeDifficulties);
+		}
+		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_3) {			
 			return nextDifficultyV3(timestamps, cumulativeDifficulties);
 		}
 		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_2) {
-			
-			printf(" diff: %d \n", blockMajorVersion);
-
 			return nextDifficultyV2(timestamps, cumulativeDifficulties);
 		}
 		else {
-
-			printf(" diff: %d \n", blockMajorVersion);
-			
 			return nextDifficultyV1(timestamps, cumulativeDifficulties);
 		}
 	}
@@ -485,60 +482,187 @@ namespace CryptoNote {
 		return (low + timeSpan - 1) / timeSpan;
 	}
 
-	difficulty_type Currency::nextDifficultyV2(std::vector<uint64_t> timestamps,
-		std::vector<difficulty_type> cumulativeDifficulties) const {
+	
+	difficulty_type Currency::nextDifficultyV2(
+			std::vector<uint64_t> timestamps,
+      std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		// Difficulty calculation v. 2
-		// based on Zawy difficulty algorithm v1.0
-		// next Diff = Avg past N Diff * TargetInterval / Avg past N solve times
-		// as described at https://github.com/monero-project/research-lab/issues/3
-		// Window time span and total difficulty is taken instead of average as suggested by Nuclear_chaos
+    difficulty_type nextDiff(0);
 
-		size_t m_difficultyWindow_2 = CryptoNote::parameters::DIFFICULTY_WINDOW_V2;
-		assert(m_difficultyWindow_2 >= 2);
+    size_t m_difficultyWindow_2 = CryptoNote::parameters::DIFFICULTY_WINDOW_V2;
 
-		if (timestamps.size() > m_difficultyWindow_2) {
-			timestamps.resize(m_difficultyWindow_2);
-			cumulativeDifficulties.resize(m_difficultyWindow_2);
+    if (timestamps.size() > m_difficultyWindow_2) {
+      timestamps.resize(m_difficultyWindow_2);
+      cumulativeDifficulties.resize(m_difficultyWindow_2);
+    }
+
+    size_t length = timestamps.size();
+    assert(length == cumulativeDifficulties.size());
+    assert(length <= m_difficultyWindow_2);
+
+    if (length <= 1) {
+      return 1;
+    }
+
+    const double_t adjust = 0.9912338056;
+    const uint64_t c_difficultyTarget = m_difficultyTarget;
+
+    uint64_t weightedSolveTimes = 0;
+    uint64_t aimedTarget = 0;
+    int64_t totalSolvedTime = 0;
+
+    for (size_t i = 1; i < length; i++) {
+      uint64_t solveTime;
+      solveTime = timestamps[i] - timestamps[i-1];
+
+      if (solveTime >  8 * c_difficultyTarget) {
+        solveTime =  8 * c_difficultyTarget;
+      }
+
+    	weightedSolveTimes +=  solveTime * i;
+   		totalSolvedTime += solveTime;
+    }
+
+    aimedTarget = adjust * ((length + 1) / 2.0) * c_difficultyTarget ;
+
+    if (weightedSolveTimes < c_difficultyTarget * length / 2) {
+      weightedSolveTimes = c_difficultyTarget * length / 2;
+    }
+
+    difficulty_type totalWork = cumulativeDifficulties.back() - cumulativeDifficulties.front();
+    assert(totalWork > 0);
+    uint64_t low, high;
+    low = mul128(totalWork, aimedTarget, &high);
+
+    if (high != 0) {
+      return 0;
+    }
+
+    nextDiff = low / weightedSolveTimes;
+
+    if (nextDiff <= 0) {
+      nextDiff = 1;
+    }
+
+    return nextDiff;
+  }
+
+	difficulty_type Currency::nextDifficultyV3(
+			std::vector<uint64_t> timestamps,
+			std::vector<difficulty_type> cumulativeDifficulties) const {
+
+		const size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3 - 1;
+		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
+		
+		if (timestamps.size() > N + 1) {
+			timestamps.resize(N + 1);
+			cumulativeDifficulties.resize(N + 1);
 		}
-
-		size_t length = timestamps.size();
-		assert(length == cumulativeDifficulties.size());
-		assert(length <= m_difficultyWindow_2);
-		if (length <= 1) {
+		
+		size_t n = timestamps.size();
+		
+		if (n <= 1) {
 			return 1;
 		}
+		
+		const double_t adjust = 0.998;
+		const double_t k = N * (N + 1) / 2;
 
-		sort(timestamps.begin(), timestamps.end());
+		double_t LWMA(0), sum_inverse_D(0), harmonic_mean_D(0), nextDifficulty(0);
+		int64_t solveTime(0);
+		uint64_t difficulty(0), next_difficulty(0);
 
-		uint64_t timeSpan = timestamps.back() - timestamps.front();
-		if (timeSpan == 0) {
-			timeSpan = 1;
+		// Loop through N most recent blocks. N is most recently solved block.
+		for (int64_t i = 1; i <= N; i++) {
+			solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]);
+			solveTime = std::min<int64_t>((T * 7), std::max<int64_t>(solveTime, (-7 * T)));
+			difficulty = cumulativeDifficulties[i] - cumulativeDifficulties[i - 1];
+			LWMA += solveTime * i / k;
+			sum_inverse_D += 1 / static_cast<double_t>(difficulty);
 		}
 
-		difficulty_type totalWork = cumulativeDifficulties.back() - cumulativeDifficulties.front();
-		assert(totalWork > 0);
-
-		// uint64_t nextDiffZ = totalWork * m_difficultyTarget / timeSpan; 
-
-		uint64_t low, high;
-		low = mul128(totalWork, m_difficultyTarget, &high);
-		// blockchain error "Difficulty overhead" if this function returns zero
-		if (high != 0) {
-			return 0;
+		// Keep LWMA sane in case something unforeseen occurs.
+    	if (static_cast<int64_t>(boost::math::round(LWMA)) < T / 20) {
+		    LWMA = static_cast<double_t>(T / 20);
 		}
-
-		uint64_t nextDiffZ = low / timeSpan;
-
+		
+		harmonic_mean_D = N / sum_inverse_D * adjust;
+	  nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
+	  next_difficulty /= static_cast<uint64_t>(nextDifficulty);
+		
 		// minimum limit
-		if (nextDiffZ < 100000) {
-			nextDiffZ = 100000;
+		if (next_difficulty < 100000) {
+			next_difficulty = 100000;
 		}
 
-		return nextDiffZ;
-	}
+		return next_difficulty;
+  }
 
-	difficulty_type Currency::nextDifficultyV3(std::vector<uint64_t> timestamps,
+	difficulty_type Currency::nextDifficultyV4(
+			std::vector<uint64_t> timestamps,
+			std::vector<difficulty_type> cumulativeDifficulties) const {
+
+		// LWMA difficulty algorithm
+		// Copyright (c) 2017-2018 Zawy
+		// MIT license http://www.opensource.org/licenses/mit-license.php.
+		// This is an improved version of Tom Harding's (Deger8) "WT-144"  
+		// Karbowanec, Masari, Bitcoin Gold, and Bitcoin Cash have contributed.
+		// See https://github.com/zawy12/difficulty-algorithms/issues/1 for other algos.
+		// Do not use "if solvetime < 0 then solvetime = 1" which allows a catastrophic exploit.
+		// T= target_solvetime;
+		// N = int(45 * (600 / T) ^ 0.3));
+
+		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
+		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
+
+		// return a difficulty of 1 for first 3 blocks if it's the start of the chain
+		if (timestamps.size() < 4) {
+			return 1;
+		}
+		// otherwise, use a smaller N if the start of the chain is less than N+1
+		else if (timestamps.size() < N + 1) {
+			N = timestamps.size() - 1;
+		}
+		else if (timestamps.size() > N + 1) {
+			timestamps.resize(N + 1);
+			cumulativeDifficulties.resize(N + 1);
+		}
+
+		// To get an average solvetime to within +/- ~0.1%, use an adjustment factor.
+		const double adjust = 0.998;
+		// The divisor k normalizes LWMA.
+		const double k = N * (N + 1) / 2;
+
+		double LWMA(0), sum_inverse_D(0), harmonic_mean_D(0), nextDifficulty(0);
+		int64_t solveTime(0);
+		uint64_t difficulty(0), next_difficulty(0);
+
+		// Loop through N most recent blocks.
+		for (size_t i = 1; i <= N; i++) {
+			solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]);
+			solveTime = std::min<int64_t>((T * 7), std::max<int64_t>(solveTime, (-6 * T)));
+			difficulty = cumulativeDifficulties[i] - cumulativeDifficulties[i - 1];
+			LWMA += (int64_t)(solveTime * i) / k;
+			sum_inverse_D += 1 / static_cast<double>(difficulty);
+		}
+
+		// Keep LWMA sane in case something unforeseen occurs.
+		if (static_cast<int64_t>(boost::math::round(LWMA)) < T / 20)
+			LWMA = static_cast<double>(T) / 20;
+
+		harmonic_mean_D = N / sum_inverse_D * adjust;
+		nextDifficulty = harmonic_mean_D * T / LWMA;
+		next_difficulty = static_cast<uint64_t>(nextDifficulty);
+		
+		// minimum limit
+		if (next_difficulty < 100000) {
+			next_difficulty = 100000;
+		}
+
+		return next_difficulty;
+	}	
+	
+	difficulty_type Currency::nextDifficultyV5(std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
 
 		// LWMA difficulty algorithm
@@ -609,8 +733,9 @@ namespace CryptoNote {
 			case BLOCK_MAJOR_VERSION_1:
 				return checkProofOfWorkV1(context, block, currentDiffic, proofOfWork);
 
-			case BLOCK_MAJOR_VERSION_2:
 			case BLOCK_MAJOR_VERSION_3:
+				return true;
+			case BLOCK_MAJOR_VERSION_2:
 			case BLOCK_MAJOR_VERSION_4:
 			case BLOCK_MAJOR_VERSION_5:
 				return checkProofOfWorkV2(context, block, currentDiffic, proofOfWork);
@@ -625,10 +750,6 @@ namespace CryptoNote {
 			Crypto::cn_context& context, const Block& block,
 			difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const {
 		
-		if (block.majorVersion > BLOCK_MAJOR_VERSION_1) {
-			return false;
-		}
-
 		if (!get_block_longhash(context, block, proofOfWork)) {
 			return false;
 		}
@@ -640,10 +761,6 @@ namespace CryptoNote {
 			Crypto::cn_context& context, const Block& block,
 			difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const {
 		
-		if (block.majorVersion < BLOCK_MAJOR_VERSION_2) {
-			return false;
-		}
-
 		if (!get_block_longhash(context, block, proofOfWork)) {
 			return false;
 		}
@@ -675,7 +792,6 @@ namespace CryptoNote {
 			logger(ERROR, BRIGHT_YELLOW) << "Aux block hash wasn't found in merkle tree";
 			return false;
 		}
-
 		return true;
 	}
 
