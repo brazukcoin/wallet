@@ -602,8 +602,8 @@ namespace CryptoNote {
 		}
 		
 		harmonic_mean_D = N / sum_inverse_D * adjust;
-	    nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
-	    next_difficulty = static_cast<uint64_t>(nextDifficulty);
+	  nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
+	  next_difficulty /= static_cast<uint64_t>(nextDifficulty);
 		
 		// minimum limit
 		if (next_difficulty < 100000) {
