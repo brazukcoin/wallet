@@ -419,7 +419,19 @@ namespace CryptoNote {
 	difficulty_type Currency::nextDifficulty(uint8_t blockMajorVersion, std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
 
-		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_3) {
+		if (blockMajorVersion >= BLOCK_MAJOR_VERSION_5) {
+			
+			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
+			
+			return nextDifficultyV5(timestamps, cumulativeDifficulties);
+		}
+		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_4) {
+			
+			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
+			
+			return nextDifficultyV5(timestamps, cumulativeDifficulties);
+		}
+		else if (blockMajorVersion == BLOCK_MAJOR_VERSION_3) {
 			
 			printf("\n BLOCK MAJOR VERSION: %d \n ", blockMajorVersion);
 			
@@ -550,7 +562,59 @@ namespace CryptoNote {
     return nextDiff;
   }
 
-	difficulty_type Currency::nextDifficultyV3(std::vector<uint64_t> timestamps,
+	difficulty_type Currency::nextDifficultyV3(
+			std::vector<uint64_t> timestamps,
+			std::vector<difficulty_type> cumulativeDifficulties) const {
+
+		const size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3 - 1;
+		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
+		
+		if (timestamps.size() > N + 1) {
+			timestamps.resize(N + 1);
+			cumulativeDifficulties.resize(N + 1);
+		}
+		
+		size_t n = timestamps.size();
+		
+		if (n <= 1) {
+			return 1;
+		}
+		
+		const double_t adjust = 0.998;
+		const double_t k = N * (N + 1) / 2;
+
+		double_t LWMA(0), sum_inverse_D(0), harmonic_mean_D(0), nextDifficulty(0);
+		int64_t solveTime(0);
+		uint64_t difficulty(0), next_difficulty(0);
+
+		// Loop through N most recent blocks. N is most recently solved block.
+		for (int64_t i = 1; i <= N; i++) {
+			solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]);
+			solveTime = std::min<int64_t>((T * 7), std::max<int64_t>(solveTime, (-7 * T)));
+			difficulty = cumulativeDifficulties[i] - cumulativeDifficulties[i - 1];
+			LWMA += solveTime * i / k;
+			sum_inverse_D += 1 / static_cast<double_t>(difficulty);
+		}
+
+		// Keep LWMA sane in case something unforeseen occurs.
+    	if (static_cast<int64_t>(boost::math::round(LWMA)) < T / 20) {
+		    LWMA = static_cast<double_t>(T / 20);
+		}
+		
+		harmonic_mean_D = N / sum_inverse_D * adjust;
+	    nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
+	    next_difficulty = static_cast<uint64_t>(nextDifficulty);
+		
+		// minimum limit
+		if (next_difficulty < 100000) {
+			next_difficulty = 100000;
+		}
+
+		return next_difficulty;
+  }
+
+
+	difficulty_type Currency::nextDifficultyV5(std::vector<uint64_t> timestamps,
 		std::vector<difficulty_type> cumulativeDifficulties) const {
 
 		// LWMA difficulty algorithm
@@ -638,10 +702,6 @@ namespace CryptoNote {
 			Crypto::cn_context& context, const Block& block,
 			difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const {
 		
-		if (block.majorVersion > BLOCK_MAJOR_VERSION_1) {
-			return false;
-		}
-
 		if (!get_block_longhash(context, block, proofOfWork)) {
 			return false;
 		}
@@ -653,10 +713,6 @@ namespace CryptoNote {
 			Crypto::cn_context& context, const Block& block,
 			difficulty_type currentDiffic, Crypto::Hash& proofOfWork) const {
 		
-		if (block.majorVersion < BLOCK_MAJOR_VERSION_2) {
-			return false;
-		}
-
 		if (!get_block_longhash(context, block, proofOfWork)) {
 			return false;
 		}
@@ -688,7 +744,6 @@ namespace CryptoNote {
 			logger(ERROR, BRIGHT_YELLOW) << "Aux block hash wasn't found in merkle tree";
 			return false;
 		}
-
 		return true;
 	}
 
