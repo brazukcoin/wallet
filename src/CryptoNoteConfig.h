@@ -43,20 +43,23 @@ const unsigned EMISSION_SPEED_FACTOR                         = 18;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
 
 const size_t   CRYPTONOTE_REWARD_BLOCKS_WINDOW               = 100;
+
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE     = 1000000; //size of block (bytes) after which reward for block calculated using block size
-const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2  = 1000000;
-const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1  = 100000;
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_CURRENT = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
+const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1  = 100000;
+const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2  = 1000000;
+
 const size_t   CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE        = 600;
 const size_t   CRYPTONOTE_DISPLAY_DECIMAL_POINT              = 12;
 const uint64_t MINIMUM_FEE                                   = UINT64_C(100000000);
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(100000000);
-const uint64_t MAX_TX_MIXIN_SIZE                             = 20;
 
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
+
 const size_t   DIFFICULTY_WINDOW                             = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY; // blocks
 const size_t   DIFFICULTY_WINDOW_V2                          = 17;  // blocks
 const size_t   DIFFICULTY_WINDOW_V3                          = 60;  // blocks
+
 const size_t   DIFFICULTY_CUT                                = 60;  // timestamps to cut after sorting
 const size_t   DIFFICULTY_LAG                                = 15;  // !!!
 static_assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2, "Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT");
@@ -79,7 +82,7 @@ const size_t   FUSION_TX_MIN_IN_OUT_COUNT_RATIO              = 4;
 const uint32_t UPGRADE_HEIGHT_V2                             = 18500;
 const uint32_t UPGRADE_HEIGHT_V3                             = 40000;
 const uint32_t UPGRADE_HEIGHT_V4                             = 100000;
-const uint32_t UPGRADE_HEIGHT_V5                             = 200000;
+const uint32_t UPGRADE_HEIGHT_V5                             = 2147483645;
 
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90; // percent
 const uint32_t UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -148,7 +151,24 @@ struct CheckpointData {
 };
 
 const std::initializer_list<CheckpointData> CHECKPOINTS = { 
-//  {3436,	"fa0348c379f63af68304f9f256ea99cc8560eda5a25740dc7ff94631fc7fcf5d" },
+  { 1984, "09d2e9fe95143685f823db0dccb53fe847f6223324b9001e5ef1c9b2f2ac46f6" },
+  { 3968, "13c3e7692bdace890976d6bb0a4acd9202be5a8ef6cb0722ef3682b7594377d7" },
+  { 5952, "d12b76f4322a33895f85350acee9a1b72f29eb381d6a9eb8978b7cffb93444cf" },
+  { 7936, "4a75cc598e4c53533fb2cb26423563ddbe47a2c5109ae40e3967da4d472a8d24" },
+  { 9920, "2bc30a1d555f3f56d66eadb8d443e096a1d56d4f38acd9327bc17d16a981d36f" },
+  { 11904, "812ad851c766a4e17a2a1ba11cdd16b91caec86ba74f742d3a8c6f5486c9cb26" },
+  { 13888, "17ed08363437e18891e8bcf3a95bf68a28e8c91cecbd9a381c627c8ae5f34d81" },
+  { 15872, "5802fb368b199b323a79d2f72b1b639a3f4a62d896b61665a9aafc0194b52687" },
+  { 17856, "ccd3e3fa12bb56694a04fc5aed2a8546ec95a4073ef019f639be9a567ab6b73e" },
+  { 19840, "9f1dd8c2bb42525c66ee991405b35263e31793ce7b689f0840430e5f3c20d7f3" },
+  { 21824, "a6652f8d75c8b1b2a6aa620ce35e2a08802b328af1e978d995df538a6bb2ee63" },
+  { 23808, "38d9b9d5ceceacd5b533390ebad7c13a4a0405296d09dacde37f77b98d2e7574" },
+  { 25792, "eace0b97e1b5438abfdf902ecf8f60543d8cbbf0af899e041b3557eecef696f7" },
+  { 27776, "f30829247ea1d2beb3953d8e22673b07455b97a0213c375b2c99c75bfa56fed2" },
+  { 29760, "a38e038069f4c5143c56b31c851ff92eca8e1cecbe103d395b25451bbbfc5ccd" },
+  { 31744, "aaab1d856bddaa5fe6a7e8542862570fe9107925cbe8957cc07b2d08b2c210f3" },
+  { 33728, "19dc310013e45ad2355596997b27597b1a451ec4afae98a5b39de919ae40987f" },
+  { 35712, "37c4b7e38531d6e55d1f912944fd46a2b659b8522cc9ee2754ded0602c7e8096" }
 };
 
 } // CryptoNote
