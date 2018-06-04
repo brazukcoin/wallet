@@ -628,7 +628,7 @@ namespace CryptoNote {
 		// N = int(45 * (600 / T) ^ 0.3));
 
 		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
-		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V4;
+		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
 
 		// return a difficulty of 1 for first 3 blocks if it's the start of the chain
 		if (timestamps.size() < 4) {
