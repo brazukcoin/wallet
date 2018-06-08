@@ -1,4 +1,13 @@
-Brazukcoin is cryptocurrency of Ukrainian origin, just like Bitcoin but more anonymous and privacy centric with opaque and more analysis resistant blockchain. It is people's electronic cash, not connected to government or officials.
+![Logo of BrazukCoin](http://www.brazukcoin.org/wp-content/uploads/2018/03/brazukcoin-logo.png)
+
+
+**If you wish to build the GUI version of the wallet, go here: https://github.com/brazukcoin/wallet-gui**
+
+
+In a world of mounting threats to personal liberty, Brazukcoin adds a new front of resistance through real financial freedom.
+Brazukcoin is based on time-tested blockchain technology while also adding extreme privacy features in its CryptoNote algorithm.
+The code is (and will always remain) free and open-source!
+
 
 ## Building Brazukcoin
 
